@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  REPORTED
+  IN_PROGRESS
+  ACCEPTED
+  REJECTED
+}
+
+enum Category {
+  INSFRASTURCTURE
+  ENVIROUNMENT
+  COMMUNITY_SERVICES
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String
+  password      String
+  houseLocation String?
+  rank          Int      @default(0)
+  profilePic    String?
+  createdAt     DateTime @default(now())
+  isGoverment   Boolean  @default(false)
+
+  problems Problem[]
+}
+
+model Problem {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  location    String
+  clustorId   Int
+  status      Status   @default(REPORTED)
+  image       String?
+  title       String
+  description String
+  lang        Float?
+  lat         Float?
+  rating      Int?     @default(0) @db.SmallInt
+  votes       Int      @default(0)
+  category    Category
+  createdAt   DateTime @default(now())
+
+  @@map("problems")
+}
+
+model Analytics {
+  id             Int      @id @default(autoincrement())
+  totalProblems  Int      @default(0)
+  solvedProblems Int      @default(0)
+  inProgress     Int      @default(0)
+  rejected       Int      @default(0)
+  lastUpdated    DateTime @default(now())
+
+  @@map("analytics")
+}
