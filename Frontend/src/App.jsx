@@ -20,7 +20,7 @@ function App() {
           <Route path="/leaderboard" element={<LeaderBoard />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/report-issue" element={<ReportIssue />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
         </Routes>
       </div>
     </Router>

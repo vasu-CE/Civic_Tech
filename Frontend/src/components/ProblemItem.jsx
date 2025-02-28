@@ -31,7 +31,7 @@ const problems = [
     description:"Street light at Main St. and 5th Ave has been out for 2 weeks",
     category: "Infrastructure",
     status: "open",
-    votes: 45,
+    voteCount: 45,
     ratings: [],
     image: img,
     author: "John Doe",
@@ -43,13 +43,14 @@ const problems = [
     description: "No garbage collection in Cedar neighborhood for past week",
     category: "Sanitation",
     status: "in-progress",
-    votes: 32,
+    voteCount: 32,
     rating: 3.8,
     image: img,
     author: "Jane Smith",
     isAuthor: false,
   },
 ];
+
 
 const categories = [
   "All",
@@ -69,16 +70,17 @@ export default function ProblemItem() {
       setRole(user.isGoverment ? "goverment" : "user");
     }
   }, [user])
-
+  
   // console.log(user);
   const isGovOfficial = role === "goverment"; 
-
+  
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [isLoading, setIsLoading] = useState(false);
 
+  const problems = useSelector((state) => state.problem.problems);
   const calculateAverageRating = (ratings) => {
     if (ratings.length === 0) return 0;
     const total = ratings.reduce((acc, rating) => acc + rating, 0);
@@ -86,7 +88,7 @@ export default function ProblemItem() {
   };
 
   const filteredProblems = React.useMemo(() => {
-    return problems.filter(
+    return problems?.filter(
       (problem) =>
         (selectedCategory === "All" || problem.category === selectedCategory) &&
         (selectedStatus === "All" || problem.status === selectedStatus) &&
@@ -99,8 +101,8 @@ export default function ProblemItem() {
     switch (sortBy) {
       case "newest":
         return sorted.sort((a, b) => b.id - a.id);
-      case "votes":
-        return sorted.sort((a, b) => b.votes - a.votes);
+      case "voteCount":
+        return sorted.sort((a, b) => b.voteCount - a.voteCount);
       case "rating":
         return sorted.sort((a, b) => b.rating - a.rating);
       default:
@@ -144,7 +146,7 @@ export default function ProblemItem() {
                           {category}
                           <Badge variant="outline" className="ml-auto">
                             {
-                              problems.filter(
+                              problems?.filter(
                                 (p) =>
                                   category === "All" || p.category === category
                               ).length
@@ -180,7 +182,7 @@ export default function ProblemItem() {
                           {status}
                           <Badge variant="outline" className="ml-auto">
                             {
-                              problems.filter(
+                              problems?.filter(
                                 (p) => status === "All" || p.status === status
                               ).length
                             }
@@ -212,7 +214,7 @@ export default function ProblemItem() {
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="newest">Newest First</option>
-                  <option value="votes">Most Votes</option>
+                  <option value="voteCount">Most voteCount</option>
                   <option value="rating">Highest Rated</option>
                 </select>
 

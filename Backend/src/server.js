@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import problemRoutes from "./routes/problem.routes.js";
+import analyticRoutes from "./routes/analytics.routes.js";
 
 import cors from "cors";
+import prisma from "./utils/prismClient.js";
 
 dotenv.config();
 const app = express();
@@ -22,6 +24,7 @@ app.use(cors(corsOptions))
 
 app.use("/auth" , authRoutes);
 app.use("/issue" , problemRoutes);
+app.use("/analytics" , analyticRoutes);
 
 app.use("/api" , async (req , res) => {
     const lat = "22.596720";
@@ -32,6 +35,12 @@ app.use("/api" , async (req , res) => {
     const city = data;
     // console.log(city);
     res.json(city);
+})
+
+app.use("/" , async (req , res) => {
+  // await prisma.problem.deleteMany({});
+  const user = await prisma.problem.findMany({});
+  console.log(user);
 })
 
 const PORT = process.env.PORT || 3000

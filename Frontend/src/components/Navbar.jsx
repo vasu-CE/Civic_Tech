@@ -3,8 +3,10 @@ import { Button } from "./ui/button";
 import { Plus, BarChart, LineChart, Home, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
 
 function Navbar() {
+  const user = useSelector(state => state.user.user);
   return (
     <nav className="bg-white h-20 flex items-center fixed top-0 z-10 shadow-md w-full">
       <div className="w-full px-8 py-4 flex justify-between items-center">
@@ -27,7 +29,7 @@ function Navbar() {
             </Button>
           </Link>
 
-          <Link to="/profile">
+          <Link to={`/profile/${user.id}`}>
             <Button variant="outline" size="sm" className="">
               <User className="h-4 w-4 mr-2" />
               Profile

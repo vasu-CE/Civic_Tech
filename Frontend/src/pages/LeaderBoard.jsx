@@ -14,6 +14,8 @@ const leaderboardData = [
   { rank: 6, name: "nandit27", points: 50, Problem: 6, avatar: "https://github.com/shadcn.png" },
 ];
 
+
+
 const getRankStyle = (rank) => {
   switch (rank) {
     case 1:

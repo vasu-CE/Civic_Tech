@@ -15,7 +15,7 @@ enum Status {
 }
 
 enum Category {
-  INSFRASTURCTURE
+  INFRASTURCTURE
   ENVIROUNMENT
   COMMUNITY_SERVICES
 }
@@ -26,12 +26,15 @@ model User {
   name          String
   password      String
   houseLocation String?
+  city String?
   rank          Int      @default(0)
   profilePic    String?
   createdAt     DateTime @default(now())
   isGoverment   Boolean  @default(false)
 
   problems Problem[]
+  Vote     Vote[]
+  Rating   Rating[]
 }
 
 model Problem {
@@ -47,11 +50,35 @@ model Problem {
   lang        Float?
   lat         Float?
   rating      Int?     @default(0) @db.SmallInt
-  votes       Int      @default(0)
+  votes       Vote[]
+  voteCount   Int      @default(0)
+  Rating      Rating[]
   category    Category
   createdAt   DateTime @default(now())
 
   @@map("problems")
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  problemId Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, problemId])
+}
+
+model Rating {
+  id        Int     @id @default(autoincrement())
+  rating    Int     @default(1)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId Int
+
+  @@unique([userId, problemId])
 }
 
 model Analytics {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 // import { motion, AnimatePresence } from 'motion';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
@@ -20,27 +20,31 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { BASE_URL } from '@/lib/constant';
+import { useParams } from 'react-router-dom';
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [user , setUser] = useState(null);
+  const {userId} = useParams();
   
-  const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    address: "123 Street, City, Country",
-    avatar: "/path/to/avatar.jpg",
-    joinedDate: "January 2023",
-    problemsPosted: 10,
-    problemsResolved: 7,
-    inProgress: 2,
-    pending: 1,
-    rating: 4.5,
-    recentActivity: [
-      { id: 1, type: 'post', title: 'Broken Street Light', status: 'resolved', date: '2 days ago' },
-      { id: 2, type: 'update', title: 'Garbage Collection', status: 'in-progress', date: '5 days ago' },
-    ]
-  };
+    useEffect(() => {
+      const fetchProfile =async () => {
+        try{
+          const res = await axios.get(`${BASE_URL}/auth/get-profile/${userId}` , {withCredentials : true})
 
+          if(res.data.success){
+            console.log(res.data.data)
+            setUser(res.data.data)
+          }
+        }catch(err){
+          toast.error(err.message);
+        }
+      }
+      fetchProfile();
+    }, [userId])
   const activityData = [
     { name: 'Jan', issues: 4 },
     { name: 'Feb', issues: 3 },
@@ -62,9 +66,9 @@ const Profile = () => {
             <div className="relative group">
               <div className="relative">
                 <Avatar className="w-32 h-32 border-4 border-white shadow-xl group-hover:shadow-2xl transition-all duration-300">
-                  <AvatarImage src={user.avatar} alt={user.name} className="object-cover" />
+                  <AvatarImage src={user?.avatar} alt={user?.name} className="object-cover" />
                   <AvatarFallback className="text-4xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {user?.name?.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                 <button className="absolute bottom-2 right-2 p-2 bg-blue-600 rounded-full text-white hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110">
@@ -74,16 +78,16 @@ const Profile = () => {
               </div>
 
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
-              <p className="text-gray-500 mt-1">Member since {user.joinedDate}</p>
+              <h1 className="text-3xl font-bold text-gray-900">{user?.name}</h1>
+              <p className="text-gray-500 mt-1">Member since {user?.joinedDate}</p>
               <div className="flex flex-wrap gap-4 mt-4 justify-center md:justify-start">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Mail className="w-4 h-4 text-blue-500" />
-                  <span>{user.email}</span>
+                  <span>{user?.email}</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <MapPin className="w-4 h-4 text-blue-500" />
-                  <span>{user.address}</span>
+                  <span>{user?.address}</span>
                 </div>
               </div>
             </div>
@@ -101,10 +105,10 @@ const Profile = () => {
             className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             {[
-              { title: 'Total Posted', value: user.problemsPosted, icon: AlertCircle, color: 'blue' },
-              { title: 'Resolved', value: user.problemsResolved, icon: CheckCircle, color: 'green' },
-              { title: 'In Progress', value: user.inProgress, icon: Clock, color: 'yellow' },
-              { title: 'Rating', value: user.rating, icon: Award, color: 'purple' },
+              { title: 'Total Posted', value: user?.problemsPosted, icon: AlertCircle, color: 'blue' },
+              { title: 'Resolved', value: user?.problemsResolved, icon: CheckCircle, color: 'green' },
+              { title: 'In Progress', value: user?.inProgress, icon: Clock, color: 'yellow' },
+              { title: 'Rating', value: user?.rating, icon: Award, color: 'purple' },
             ].map((stat, index) => (
               <motion.div
                 key={stat.title}
@@ -172,7 +176,7 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {user.recentActivity.map((activity, index) => (
+                  {user?.recentActivity?.map((activity, index) => (
                     <motion.div
                       key={activity.id}
                       initial={{ opacity: 0, x: -20 }}

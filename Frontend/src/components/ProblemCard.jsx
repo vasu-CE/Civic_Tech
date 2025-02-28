@@ -25,15 +25,18 @@ import {
   Share2,
 } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { useSelector } from "react-redux";
 
 function ProblemCard({ problem, isGovOfficial }) {
   const [isHovered, setIsHovered] = React.useState(false);
   const [userRating, setUserRating] = React.useState(0);
   const [isVoted, setIsVoted] = React.useState(false);
-  const [votes, setVotes] = React.useState(problem.votes);
+  const [voteCount, setVoteCount] = React.useState(problem.voteCount);
   const [status, setStatus] = React.useState(problem.status);
   const [progress, setProgress] = React.useState(0);
   const [actionTaken, setActionTaken] = React.useState(false);
+
+  const author = useSelector((state) => state.user.user);
 
   const handleRating = (rating) => {
     setUserRating(rating);
@@ -42,10 +45,10 @@ function ProblemCard({ problem, isGovOfficial }) {
 
   const handleVote = () => {
     if (!isVoted) {
-      setVotes((prev) => prev + 1);
+      setVoteCount((prev) => prev + 1);
       setIsVoted(true);
     } else {
-      setVotes((prev) => prev - 1);
+      setVoteCount((prev) => prev - 1);
       setIsVoted(false);
     }
     // Add API call logic here
@@ -117,7 +120,7 @@ function ProblemCard({ problem, isGovOfficial }) {
               </div>
             </div>
 
-            {problem.isAuthor && !isGovOfficial && (
+            {problem.userId == author.id && !author.isGoverment && (
               <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -203,7 +206,7 @@ function ProblemCard({ problem, isGovOfficial }) {
                 <ThumbsUp
                   className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`}
                 />
-                <span>{votes}</span>
+                <span>{voteCount}</span>
               </Button>
             )}
 

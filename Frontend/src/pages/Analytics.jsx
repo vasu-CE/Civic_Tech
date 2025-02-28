@@ -41,11 +41,9 @@ const analyticsData = {
   averageResolutionTime: "15 days",
 
   issueCategories: [
-    { name: "Roads", count: 98 },
-    { name: "Sanitation", count: 76 },
-    { name: "Water Supply", count: 65 },
-    { name: "Electricity", count: 45 },
-    { name: "Public Safety", count: 40 },
+    { name: "Infrastructure", count: 98 },
+    { name: "Envirounment", count: 76 },
+    { name: "Community", count: 65 },
   ],
 
   statusDistribution: [
