@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -29,6 +29,9 @@ import {
   ResponsiveContainer,
   Label,
 } from "recharts";
+import { BASE_URL } from "@/lib/constant";
+import axios from "axios";
+import { toast } from "sonner";
 
 const analyticsData = {
   totalIssues: 324,
@@ -43,7 +46,9 @@ const analyticsData = {
   issueCategories: [
     { name: "Infrastructure", count: 98 },
     { name: "Envirounment", count: 76 },
-    { name: "Community", count: 65 },
+    { name: "COMMUNITY_SERVICES", count: 65 },
+    { name: "Electricity", count: 45 },
+    { name: "Public Safety", count: 40 },
   ],
 
   statusDistribution: [
@@ -104,7 +109,7 @@ const analyticsData = {
     { month: "Dec", reported: 65, resolved: 58, inProgress: 18 },
   ],
 
-  lastMonthData : [
+  lastMonthData: [
     { date: "1 Nov", reported: 8, resolved: 4, inProgress: 3 },
     { date: "3 Nov", reported: 12, resolved: 6, inProgress: 4 },
     { date: "5 Nov", reported: 11, resolved: 7, inProgress: 3 },
@@ -121,7 +126,36 @@ const analyticsData = {
     { date: "27 Nov", reported: 13, resolved: 8, inProgress: 3 },
     { date: "30 Nov", reported: 12, resolved: 7, inProgress: 4 },
   ],
+};
 
+const fetchAllData = async () => {
+  try {
+    const [analyticsRes , weeklyRes, lastMonthRes, categoriesRes, recentActivityRes] =
+      await Promise.all([
+        await axios.get(`${BASE_URL}/analytics/`, { withCredentials: true}),
+        axios.get(`${BASE_URL}/analytics/weekly`, { withCredentials: true }),
+        axios.get(`${BASE_URL}/analytics/monthly`, { withCredentials: true }),
+        axios.get(`${BASE_URL}/analytics/categories`, {
+          withCredentials: true,
+        }),
+        axios.get(`${BASE_URL}/analytics/recent-activity`, {
+          withCredentials: true,
+        }),
+
+      ]);
+
+    return {
+      analytics: analyticsRes.data,
+      weekly: weeklyRes.data,
+      lastMonth: lastMonthRes.data,
+      categories: categoriesRes.data,
+      recentActivity: recentActivityRes.data,
+    };
+  } catch (error) {
+    console.error("Error fetching analytics data", error);
+    toast.error(error.message)
+    return null;
+  }
 };
 
 const StatCard = ({ title, value, icon, description, className }) => (
@@ -140,27 +174,74 @@ const StatCard = ({ title, value, icon, description, className }) => (
 );
 
 const calculateLastMonthStats = (data) => {
-  const totals = data.reduce((acc, day) => {
-    acc.resolved += day.resolved;
-    acc.inProgress += day.inProgress;
-    acc.reported += day.reported;
-    acc.pending += day.reported - (day.resolved + day.inProgress);
-    console.log(acc.pending)
-    return acc;
-  }, { resolved: 0, inProgress: 0, reported: 0, pending: 0 });
+  const totals = data.reduce(
+    (acc, day) => {
+      acc.resolved += day.resolved;
+      acc.inProgress += day.inProgress;
+      acc.reported += day.reported;
+      acc.pending += day.reported - (day.resolved + day.inProgress);
+      // console.log(acc.pending);
+      return acc;
+    },
+    { resolved: 0, inProgress: 0, reported: 0, pending: 0 }
+  );
 
   return [
-    { name: 'Reported', value: totals.reported, color: '#ef4444', label: 'Reported' }, // Red for reported issues
-    { name: 'Resolved', value: totals.resolved, color: '#10b981', label: 'Resolved Issues' }, // Green for success
-    { name: 'In Progress', value: totals.inProgress, color: '#3b82f6', label: 'In Progress' }, // Blue for ongoing work
-    { name: 'Pending', value: totals.pending, color: '#f59e0b', label: 'Pending Review' }, // Orange for waiting status
+    {
+      name: "Reported",
+      value: totals.reported,
+      color: "#ef4444",
+      label: "Reported",
+    }, // Red for reported issues
+    {
+      name: "Resolved",
+      value: totals.resolved,
+      color: "#10b981",
+      label: "Resolved Issues",
+    }, // Green for success
+    {
+      name: "In Progress",
+      value: totals.inProgress,
+      color: "#3b82f6",
+      label: "In Progress",
+    }, // Blue for ongoing work
+    {
+      name: "Pending",
+      value: totals.pending,
+      color: "#f59e0b",
+      label: "Pending Review",
+    }, // Orange for waiting status
   ];
-  
 };
 
 function Analytics() {
-  const lastMonthDistribution = calculateLastMonthStats(analyticsData.lastMonthData);
-  const lastMonthTotal = lastMonthDistribution.reduce((sum, item) => sum + item.value, 0);
+  const lastMonthDistribution = calculateLastMonthStats(
+    analyticsData.lastMonthData
+  );
+  const lastMonthTotal = lastMonthDistribution.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
+  const [data, setData] = useState({
+    analytics: {},
+    weekly: [],
+    lastMonth: [],
+    categories: [],
+    recentActivity: [],
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetchAllData();
+      if (res) setData(res);
+    };
+  
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    console.log("Updated Data:", data);
+  }, [data]);
 
   return (
     <div className="container mx-auto p-6 space-y-8">
@@ -329,8 +410,12 @@ function Analytics() {
           </Card>
           <Card className="p-6 bg-white shadow-lg rounded-lg">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-800">November Status Distribution</h3>
-              <Badge variant="outline" className="text-sm">Last Month</Badge>
+              <h3 className="text-xl font-bold text-gray-800">
+                November Status Distribution
+              </h3>
+              <Badge variant="outline" className="text-sm">
+                Last Month
+              </Badge>
             </div>
             <div className="h-[300px] relative">
               <ResponsiveContainer>
@@ -385,7 +470,9 @@ function Analytics() {
                               <span className="font-medium">{data.name}</span>
                             </div>
                             <div className="mt-1 text-sm text-muted-foreground">
-                              {data.value} issues ({Math.round((data.value/lastMonthTotal) * 100)}%)
+                              {data.value} issues (
+                              {Math.round((data.value / lastMonthTotal) * 100)}
+                              %)
                             </div>
                           </div>
                         );
@@ -409,7 +496,8 @@ function Analytics() {
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{status.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {status.value} ({Math.round((status.value/lastMonthTotal) * 100)}%)
+                      {status.value} (
+                      {Math.round((status.value / lastMonthTotal) * 100)}%)
                     </span>
                   </div>
                 </div>

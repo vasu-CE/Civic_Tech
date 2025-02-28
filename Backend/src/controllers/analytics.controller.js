@@ -67,3 +67,109 @@ export const leaderBoard = async ( req , res) => {
         return res.status(500).json(new ApiError(500 , err.message));
     }
 }
+
+export const getAnalyticsData = async (req, res) => {
+  try {
+    const totalIssues = await prisma.problem.count();
+    const resolvedIssues = await prisma.problem.count({
+      where: { status: "ACCEPTED" },
+    });
+    const rejectedIssues = await prisma.problem.count({
+      where: { status: "REJECTED" },
+    });
+    const inProgressIssues = await prisma.problem.count({
+      where: { status: "IN_PROGRESS" },
+    });
+    const reportedIssues = await prisma.problem.count({
+      where: { status: "REPORTED" },
+    });
+
+    const activeUsers = await prisma.user.count();
+    const responseRate = ((resolvedIssues / totalIssues) * 100).toFixed(2);
+
+    res.json({
+      totalIssues,
+      resolvedIssues,
+      rejectedIssues,
+      inProgressIssues,
+      pendingReview: reportedIssues,
+      activeUsers,
+      responseRate,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching analytics data" });
+  }
+};
+
+// Get weekly analytics data
+export const getWeeklyData = async (req, res) => {
+  try {
+    const today = new Date();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(today.getDate() - 7);
+
+    const weeklyData = await prisma.problem.groupBy({
+      by: ["createdAt"],
+      where: { createdAt: { gte: oneWeekAgo } },
+      _count: { id: true },
+    });
+
+    res.json(weeklyData);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching weekly data" });
+  }
+};
+
+// Get last month's analytics data
+export const getLastMonthData = async (req, res) => {
+  try {
+    const today = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+
+    const lastMonthData = await prisma.problem.groupBy({
+      by: ["createdAt"],
+      where: { createdAt: { gte: oneMonthAgo } },
+      _count: { id: true },
+    });
+
+    res.json(lastMonthData);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching last month data" });
+  }
+};
+
+// Get issue categories data
+export const getIssueCategories = async (req, res) => {
+  try {
+    const categories = await prisma.problem.groupBy({
+      by: ["category"],
+      _count: { id: true },
+    });
+
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching issue categories" });
+  }
+};
+
+// Get recent activity
+export const getRecentActivity = async (req, res) => {
+  try {
+    const recentActivity = await prisma.problem.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        title: true,
+        location: true,
+        createdAt: true,
+        status: true,
+      },
+    });
+    // console.log(recentActivity)
+
+    res.json(recentActivity);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching recent activity" });
+  }
+};
