@@ -29,9 +29,9 @@ def predict(request):
 
         new_point = np.array([[latitude, longitude]])
         _, nearest_idx = nn.kneighbors(new_point)
-        nearest_district = districts[nearest_idx[0][0]]
+        # nearest_district = districts[nearest_idx[0][0]]
 
-        return Response({"nearest_district": nearest_district})
+        return Response({"nearest_district": nearest_idx[0][0]})
 
     except (TypeError, ValueError):
         return Response({"error": "Invalid input. Provide latitude and longitude as query parameters."}, status=400)

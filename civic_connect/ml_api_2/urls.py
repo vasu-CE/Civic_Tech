@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import UnifiedClassificationAPI
+from .views import TextClassificationAPI
 
 urlpatterns = [
     # path('analyze/', analyze_data, name='analyze_data'),
-    path("analyze/", UnifiedClassificationAPI.as_view(), name="analyze_data"),
+    path("analyze/", TextClassificationAPI.as_view(), name="analyze_data"),
 ]
