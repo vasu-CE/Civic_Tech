@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes.js";
 import problemRoutes from "./routes/problem.routes.js";
 import analyticRoutes from "./routes/analytics.routes.js";
+import fakeRoutes from "./routes/fake.routes.js";
+import govermentRoutes from "./routes/goverment.routes.js";
 
 import cors from "cors";
 import prisma from "./utils/prismClient.js";
@@ -25,6 +27,8 @@ app.use(cors(corsOptions))
 app.use("/auth" , authRoutes);
 app.use("/issue" , problemRoutes);
 app.use("/analytics" , analyticRoutes);
+app.use("/gov" , govermentRoutes);
+app.use("/fake" , fakeRoutes);
 
 app.use("/api" , async (req , res) => {
     const lat = "22.596720";

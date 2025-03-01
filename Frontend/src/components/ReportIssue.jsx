@@ -16,6 +16,8 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+import { useDispatch } from "react-redux";
+import { addProblem } from "@/redux/problemSlice";
 
 const containerStyle = {
   width: "100%",
@@ -39,6 +41,7 @@ function ReportIssue() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -77,6 +80,7 @@ function ReportIssue() {
 
       if (res.data.success) {
         setShowSuccess(true);
+        dispatch(addProblem(res.data.message))
         setTimeout(() => {
         navigate("/home");
         }, 500);

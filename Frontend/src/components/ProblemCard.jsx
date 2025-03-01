@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -26,6 +26,9 @@ import {
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useSelector } from "react-redux";
+import axios from "axios";
+import { BASE_URL } from "@/lib/constant";
+import { toast } from "sonner";
 
 function ProblemCard({ problem, isGovOfficial }) {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -35,35 +38,151 @@ function ProblemCard({ problem, isGovOfficial }) {
   const [status, setStatus] = React.useState(problem.status);
   const [progress, setProgress] = React.useState(0);
   const [actionTaken, setActionTaken] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const author = useSelector((state) => state.user.user);
 
+  useEffect(() => {
+    const fetchVoteStatus = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/issue/check/${problem.id}`, { withCredentials: true });
+        setIsVoted(response.data.data.isVoted);
+        console.log(isVoted)
+      } catch (error) {
+        console.error("Error fetching vote status:", error);
+      }
+    };
+
+    fetchVoteStatus();
+  }, [problem.id]);
+
   const handleRating = (rating) => {
     setUserRating(rating);
-    // Add API call logic here
   };
 
-  const handleVote = () => {
-    if (!isVoted) {
-      setVoteCount((prev) => prev + 1);
-      setIsVoted(true);
-    } else {
-      setVoteCount((prev) => prev - 1);
-      setIsVoted(false);
-    }
-    // Add API call logic here
+    const handleVote =async () => {
+      try {
+        const response = await axios.post(`${BASE_URL}/issue/voting/${problem.id}`, {}, { withCredentials: true });
+    
+        if (response.data.success) {
+          setVoteCount((prev) => (isVoted ? prev - 1 : prev + 1));
+          setIsVoted((prev) => !prev);
+        }
+      } catch (error) {
+        toast.error(error.message)
+      }
   };
 
-  const handleStatusUpdate = (newStatus) => {
-    setStatus(newStatus);
-    // API call to update status
-  };
-
-  const handleActionTake = () => {
+  const handleActionTake = async () => {
     setActionTaken(true);
     setStatus("in-progress");
     setProgress(30);
-    // API call to update action status
+
+    const res = await axios.post(`${BASE_URL}/goverment/approve/${id}`, { withCredentials: true });
+  };
+
+  const handleStatusAction = async (action) => {
+    setLoading(true);
+    try {
+      let endpoint;
+      switch (action) {
+        case 'approve':
+          {console.log(problem.id)}
+          endpoint = `${BASE_URL}/gov/approve/${problem.id}`;
+          break;
+        case 'reject':
+          endpoint = `${BASE_URL}/gov/reject/${problem.id}`;
+          break;
+        case 'complete':
+          endpoint = `${BASE_URL}/gov/complete/${problem.id}`;
+          break;
+        default:
+          throw new Error('Invalid action');
+      }
+
+      const res = await axios.post(endpoint, {}, { withCredentials: true });
+      
+      if (res.data.success) {
+        setStatus(action === 'approve' ? 'APPROVED' : 
+                 action === 'reject' ? 'REJECTED' : 
+                 action === 'complete' ? 'COMPLETED' : status);
+        
+        toast.success(
+          action === 'approve' ? 'Problem approved successfully' :
+          action === 'reject' ? 'Problem rejected successfully' :
+          'Problem marked as completed'
+        );
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderActionButton = () => {
+    if (!isGovOfficial) return null;
+
+    if (loading) {
+      return (
+        <Button disabled className="flex items-center gap-2">
+          Processing...
+        </Button>
+      );
+    }
+
+    switch (status?.toUpperCase()) {
+      case 'REPORTED':
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleStatusAction('approve')}
+              className="bg-green-600 hover:bg-green-500 text-white"
+            >
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleStatusAction('reject')}
+              className="bg-red-600 hover:bg-red-500 text-white"
+            >
+              Reject
+            </Button>
+          </div>
+        );
+      
+      case 'IN_PROGRESS':
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleStatusAction('complete')}
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+          >
+            Mark as Completed
+          </Button>
+        );
+      
+      case 'COMPLETED':
+        return (
+          <Badge className="bg-green-100 text-green-800">
+            Completed
+          </Badge>
+        );
+      
+      case 'REJECTED':
+        return (
+          <Badge className="bg-red-100 text-red-800">
+            Rejected
+          </Badge>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   return (
@@ -174,25 +293,27 @@ function ProblemCard({ problem, isGovOfficial }) {
         <CardFooter className="p-0 pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              {!isGovOfficial &&
-                [...Array(5)].map((_, index) => (
-                  <Star
-                    key={index}
-                    className={`w-5 h-5 cursor-pointer transition-colors ${
-                      index < userRating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-gray-200 text-gray-200 hover:fill-yellow-400 hover:text-yellow-400"
-                    }`}
-                    onClick={() => handleRating(index + 1)}
-                  />
-                ))}
-
-              <span className="text-sm text-gray-600 ml-2">
-                ({problem.rating || 0})
-              </span>
+              {!isGovOfficial && (
+                <>
+                  {[...Array(5)].map((_, index) => (
+                    <Star
+                      key={index}
+                      className={`w-5 h-5 cursor-pointer transition-colors ${
+                        index < userRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-gray-200 text-gray-200 hover:fill-yellow-400 hover:text-yellow-400"
+                      }`}
+                      onClick={() => handleRating(index + 1)}
+                    />
+                  ))}
+                  <span className="text-sm text-gray-600 ml-2">
+                    ({problem.rating || 0})
+                  </span>
+                </>
+              )}
             </div>
 
-            {!isGovOfficial && (
+            {!isGovOfficial ? (
               <Button
                 variant={isVoted ? "default" : "outline"}
                 size="sm"
@@ -203,22 +324,11 @@ function ProblemCard({ problem, isGovOfficial }) {
                     : "hover:bg-blue-50 hover:text-blue-600"
                 }`}
               >
-                <ThumbsUp
-                  className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`}
-                />
+                <ThumbsUp className={`w-4 h-4 ${isVoted ? "fill-white" : ""}`} />
                 <span>{voteCount}</span>
               </Button>
-            )}
-
-            {isGovOfficial && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleActionTake}
-                className="flex items-center bg-green-600 hover:bg-green-500 text-white gap-2"
-              >
-                Take Action
-              </Button>
+            ) : (
+              renderActionButton()
             )}
           </div>
         </CardFooter>

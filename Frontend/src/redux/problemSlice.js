@@ -11,9 +11,13 @@ const problemSlice = createSlice({
     setProblems(state, action) {
       state.problems = action.payload;
     },
+    addProblem: (state, action) => {
+      state.problems.push(action.payload);
+    },
+
   },
 });
 
-export const { setProblems } = problemSlice.actions;
+export const { setProblems ,addProblem } = problemSlice.actions;
 export default problemSlice.reducer;
 

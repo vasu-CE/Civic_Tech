@@ -1,17 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, Trophy, Medal } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import axios from "axios";
+import { BASE_URL } from "@/lib/constant";
 
 const leaderboardData = [
-  { rank: 1, name: "Meetpidev", points: 101, Problem: 12, avatar: "https://github.com/shadcn.png" },
-  { rank: 2, name: "vasu-CE", points: 97, Problem: 11, avatar: "https://github.com/shadcn.png" },
-  { rank: 3, name: "MitM123", points: 90, Problem: 8, avatar: "https://github.com/shadcn.png" },
-  { rank: 4, name: "DhruvKO07", points: 88, Problem: 8, avatar: "https://github.com/shadcn.png" },
-  { rank: 5, name: "soni-shashan", points: 66, Problem: 7, avatar: "https://github.com/shadcn.png" },
-  { rank: 6, name: "nandit27", points: 50, Problem: 6, avatar: "https://github.com/shadcn.png" },
+  { rank: 1, name: "Meetpidev", score: 101, solvedProblems: 12, profilePic: "https://github.com/shadcn.png" },
+  { rank: 2, name: "vasu-CE", score: 97, solvedProblems: 11, profilePic: "https://github.com/shadcn.png" },
+  { rank: 3, name: "MitM123", score: 90, solvedProblems: 8, profilePic: "https://github.com/shadcn.png" },
+  { rank: 4, name: "DhruvKO07", score: 88, solvedProblems: 8, profilePic: "https://github.com/shadcn.png" },
+  { rank: 5, name: "soni-shashan", score: 66, solvedProblems: 7, profilePic: "https://github.com/shadcn.png" },
+  { rank: 6, name: "nandit27", score: 50, solvedProblems: 6, profilePic: "https://github.com/shadcn.png" },
 ];
 
 
@@ -47,8 +49,19 @@ const getRankStyle = (rank) => {
 
 const Leaderboard = () => {
   const [search, setSearch] = useState("");
+  const [data , setData] = useState(null);
 
-  const filteredData = leaderboardData.filter((user) =>
+  useEffect(() => {
+    async function fetchData() {
+      console.log("Hy");
+      const res = await axios.get(`${BASE_URL}/analytics/leaderboard` , {withCredentials : true})
+      // console.log(res.data.data)
+      setData(res.data.data);
+    }
+    fetchData();
+  } ,[])
+
+  const filteredData = data?.filter((user) =>
     user.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -59,7 +72,7 @@ const Leaderboard = () => {
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
             <p className="text-muted-foreground">
-              Top contributors ranked by points and solved problems
+              Top contributors ranked by score and solved solvedProblemss
             </p>
           </div>
           <div className="w-full md:w-auto">
@@ -79,12 +92,12 @@ const Leaderboard = () => {
           <div className="grid grid-cols-4 gap-4 p-4 border-b bg-gray-100/90 font-medium text-sm">
             <div>RANK</div>
             <div>USER</div>
-            <div>POINTS</div>
-            <div>PROBLEMS</div>
+            <div>SCORE</div>
+            <div>Solved Problems</div>
           </div>
 
           <div className="divide-y">
-            {filteredData.map((user) => {
+            {filteredData?.map((user) => {
               const rankStyle = getRankStyle(user.rank);
               return (
                 <div
@@ -100,18 +113,18 @@ const Leaderboard = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage src={user.profilePic} alt={user.name} />
                       <AvatarFallback>{user.name.slice(0, 2)}</AvatarFallback>
                     </Avatar>
                     <div className="font-medium">{user.name}</div>
                   </div>
                   <div>
                     <Badge variant="secondary" className="font-semibold">
-                      {user.points} pts
+                      {user.score} pts
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{user.Problem}</span>
+                    <span className="font-medium">{user.solvedProblems}</span>
                     <Badge variant="outline">solved</Badge>
                   </div>
                 </div>

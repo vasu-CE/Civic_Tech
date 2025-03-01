@@ -76,19 +76,19 @@ const analyticsData = {
   recentActivity: [
     {
       type: "Resolved",
-      issue: "Road Pothole Repair",
+      title: "Road Pothole Repair",
       location: "Main Street",
       time: "2 hours ago",
     },
     {
       type: "In Progress",
-      issue: "Street Light Maintenance",
+      title: "Street Light Maintenance",
       location: "Park Avenue",
       time: "3 hours ago",
     },
     {
       type: "Reported",
-      issue: "Garbage Collection",
+      title: "Garbage Collection",
       location: "River Road",
       time: "5 hours ago",
     },
@@ -130,30 +130,34 @@ const analyticsData = {
 
 const fetchAllData = async () => {
   try {
-    const [analyticsRes , weeklyRes, lastMonthRes, categoriesRes, recentActivityRes] =
-      await Promise.all([
-        await axios.get(`${BASE_URL}/analytics/`, { withCredentials: true}),
-        axios.get(`${BASE_URL}/analytics/weekly`, { withCredentials: true }),
-        axios.get(`${BASE_URL}/analytics/monthly`, { withCredentials: true }),
-        axios.get(`${BASE_URL}/analytics/categories`, {
-          withCredentials: true,
-        }),
-        axios.get(`${BASE_URL}/analytics/recent-activity`, {
-          withCredentials: true,
-        }),
-
-      ]);
+    const [
+      analyticsRes,
+      weeklyData,
+      monthlyData,
+      issueCategories,
+      recentActivity,
+    ] = await Promise.all([
+      await axios.get(`${BASE_URL}/analytics/`, { withCredentials: true }),
+      axios.get(`${BASE_URL}/analytics/weekly`, { withCredentials: true }),
+      axios.get(`${BASE_URL}/analytics/monthly`, { withCredentials: true }),
+      axios.get(`${BASE_URL}/analytics/categories`, {
+        withCredentials: true,
+      }),
+      axios.get(`${BASE_URL}/analytics/recent-activity`, {
+        withCredentials: true,
+      }),
+    ]);
 
     return {
       analytics: analyticsRes.data,
-      weekly: weeklyRes.data,
-      lastMonth: lastMonthRes.data,
-      categories: categoriesRes.data,
-      recentActivity: recentActivityRes.data,
+      weekly: weeklyData.data,
+      lastMonth: monthlyData.data,
+      categories: issueCategories.data,
+      recentActivity: recentActivity.data,
     };
   } catch (error) {
     console.error("Error fetching analytics data", error);
-    toast.error(error.message)
+    toast.error(error.message);
     return null;
   }
 };
@@ -215,13 +219,6 @@ const calculateLastMonthStats = (data) => {
 };
 
 function Analytics() {
-  const lastMonthDistribution = calculateLastMonthStats(
-    analyticsData.lastMonthData
-  );
-  const lastMonthTotal = lastMonthDistribution.reduce(
-    (sum, item) => sum + item.value,
-    0
-  );
   const [data, setData] = useState({
     analytics: {},
     weekly: [],
@@ -229,20 +226,27 @@ function Analytics() {
     categories: [],
     recentActivity: [],
   });
-
+  
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetchAllData();
       if (res) setData(res);
     };
-  
+    
     fetchData();
   }, []);
-
-  useEffect(() => {
-    console.log("Updated Data:", data);
-  }, [data]);
-
+  
+  // useEffect(() => {
+  //   console.log("Updated Data:", data);
+  // }, [data]);
+  
+  const lastMonthDistribution = calculateLastMonthStats(
+    data.lastMonth
+  );
+  const lastMonthTotal = lastMonthDistribution.reduce(
+    (sum, item) => sum + item.value,
+    0
+  );
   return (
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex justify-between items-center">
@@ -262,25 +266,25 @@ function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Issues"
-          value={analyticsData.totalIssues}
+          value={data.analytics.totalIssues}
           icon={<Building2 className="h-5 w-5 text-blue-600" />}
           description="Total reported issues"
         />
         <StatCard
           title="Resolved Issues"
-          value={analyticsData.resolvedIssues}
+          value={data.analytics.resolvedIssues}
           icon={<CheckCircle className="h-5 w-5 text-emerald-600" />}
           description="Successfully resolved issues"
         />
         <StatCard
           title="In Progress"
-          value={analyticsData.inProgressIssues}
+          value={data.analytics.inProgressIssues}
           icon={<Construction className="h-5 w-5 text-indigo-600" />}
           description="Issues being addressed"
         />
         <StatCard
           title="Pending Review"
-          value={analyticsData.pendingReview}
+          value={data.analytics.pendingReview}
           icon={<AlertTriangle className="h-5 w-5 text-amber-600" />}
           description="Issues awaiting review"
         />
@@ -297,92 +301,107 @@ function Analytics() {
             </Badge>
           </div>
           <div className="h-[400px]">
-            <ResponsiveContainer>
-              <AreaChart
-                data={analyticsData.lastMonthData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient
-                    id="colorReported"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorResolved"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorInProgress"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="date"
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
+            <ResponsiveContainer width="100%" height={300}>
+              {data?.lastMonth?.length > 0 ? (
+                <AreaChart
+                  data={data.lastMonth}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="colorReported"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient
+                      id="colorResolved"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient
+                      id="colorInProgress"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                    interval={0}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value, name) => [
+                      value,
+                      name.replace("Issues", "").trim(),
+                    ]}
+                  />
+                  <Legend
+                    formatter={(value) => value.replace("Issues", "").trim()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="reported"
+                    stroke="#6366f1"
+                    fill="url(#colorReported)"
+                    name="Reported Issues"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="resolved"
+                    stroke="#10b981"
+                    fill="url(#colorResolved)"
+                    name="Resolved Issues"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="inProgress"
+                    stroke="#f59e0b"
+                    fill="url(#colorInProgress)"
+                    name="In Progress Issues"
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              ) : (
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "20px",
+                    color: "#aaa",
                   }}
-                  formatter={(value, name) => [
-                    value,
-                    name.replace("Issues", "").trim(),
-                  ]}
-                />
-                <Legend
-                  formatter={(value) => value.replace("Issues", "").trim()}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="reported"
-                  stroke="#6366f1"
-                  fill="url(#colorReported)"
-                  name="Reported Issues"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="resolved"
-                  stroke="#10b981"
-                  fill="url(#colorResolved)"
-                  name="Resolved Issues"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="inProgress"
-                  stroke="#f59e0b"
-                  fill="url(#colorInProgress)"
-                  name="In Progress Issues"
-                  strokeWidth={2}
-                />
-              </AreaChart>
+                >
+                  No data available for the last month.
+                </div>
+              )}
             </ResponsiveContainer>
           </div>
           <div className="mt-4 text-sm text-muted-foreground text-center">
@@ -396,7 +415,7 @@ function Analytics() {
             <div className="h-[300px]">
               <ResponsiveContainer>
                 <BarChart
-                  data={analyticsData.issueCategories}
+                  data={data.categories.issueCategories}
                   layout="vertical"
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -509,7 +528,7 @@ function Analytics() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
           <div className="space-y-4">
-            {analyticsData.recentActivity.map((activity, index) => (
+            {data.recentActivity?.map((activity, index) => (
               <div
                 key={index}
                 className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
@@ -517,17 +536,17 @@ function Analytics() {
                 <Badge
                   variant="outline"
                   className={
-                    activity.type === "Resolved"
+                    activity.status === "Resolved"
                       ? "text-green-500"
-                      : activity.type === "In Progress"
+                      : activity.status === "In Progress"
                       ? "text-blue-500"
                       : "text-yellow-500"
                   }
                 >
-                  {activity.type}
+                  {activity.status}
                 </Badge>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.issue}</p>
+                  <p className="text-sm font-medium">{activity.title}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> {activity.location}
                   </p>

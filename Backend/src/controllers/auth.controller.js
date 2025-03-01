@@ -9,6 +9,7 @@ export const loginUser = async (req, res) => {
     const { email, password, lat, long } = req.body;
 
     let address = "";
+    console.log(lat , long)
 
     try {
       const response = await fetch(

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -100,13 +100,22 @@ export default function Login() {
     });
   };
 
-  navigator.geolocation.getCurrentPosition((position) => {
-    setFormData((prev) => ({
-      ...prev,
-      lat: position.coords.latitude,
-      long: position.coords.longitude,
-    }));
-  });
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          lat: position.coords.latitude,
+          long: position.coords.longitude,
+        }));
+      },
+      (error) => {
+        toast.error("Location access denied. Some features may not work.");
+        console.error("Error getting location:", error);
+      }
+    );
+  }, []);
+  
 
   return (
     <div

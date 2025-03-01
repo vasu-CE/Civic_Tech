@@ -29,7 +29,7 @@ function Navbar() {
             </Button>
           </Link>
 
-          <Link to={`/profile/${user.id}`}>
+          <Link to={`/profile/${user?.id}`}>
             <Button variant="outline" size="sm" className="">
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -48,6 +48,8 @@ function Navbar() {
               Sign In
             </Button>
           </Link>
+
+        
         </div>
       </div>
     </nav>

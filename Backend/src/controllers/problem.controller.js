@@ -99,6 +99,31 @@ export const voting = async (req, res) => {
   }
 };
 
+export const checkUserVote = async (req, res) => {
+  try {
+    const problemId = parseInt(req.params.id, 10);
+    const userId = req.user?.id;
+
+    if (!problemId || isNaN(problemId)) {
+      return res.status(400).json(new ApiError(400, "Invalid problem ID"));
+    }
+    if (!userId) {
+      return res.status(401).json(new ApiError(401, "Unauthorized user"));
+    }
+
+    const existingVote = await prisma.vote.findUnique({
+      where: { userId_problemId: { userId, problemId } } // Assuming composite unique constraint
+    });
+
+    return res.status(200).json(new ApiResponse(200, "Vote status retrieved", { isVoted: !!existingVote }));
+  } catch (err) {
+    console.error("Error checking vote:", err);
+    return res.status(500).json(new ApiError(500, "Internal Server Error"));
+  }
+};
+
+
+
 export const rateProblem = async ( req , res) => {
   // console.log("HYy");
     try{

@@ -7,7 +7,6 @@ import Analytics from "./pages/Analytics";
 import ReportIssue from "./components/ReportIssue";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
-
 function App() {
   return (
     <Router>
@@ -21,6 +20,7 @@ function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/report-issue" element={<ReportIssue />} />
           <Route path="/profile/:userId" element={<Profile />} />
+          
         </Routes>
       </div>
     </Router>

@@ -54,10 +54,9 @@ const problems = [
 
 const categories = [
   "All",
-  "Infrastructure",
-  "Sanitation",
-  "Public Safety",
-  "Transportation",
+  "INFRASTURCTURE",
+  "ENVIROUNMENT",
+  "COMMUNITY_SERVICES",
 ];
 const statuses = ["All", "open", "in-progress", "resolved"];
 
@@ -143,7 +142,7 @@ export default function ProblemItem() {
                         onClick={() => setSelectedCategory(category)}
                       >
                         <span className="flex items-center gap-2">
-                          {category}
+                          {category.toLowerCase()}
                           <Badge variant="outline" className="ml-auto">
                             {
                               problems?.filter(

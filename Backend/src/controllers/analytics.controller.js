@@ -1,6 +1,8 @@
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import prisma from "../utils/prismClient.js"
+import { format } from "date-fns";
+
 
 export const leaderBoard = async ( req , res) => {
    
@@ -84,17 +86,12 @@ export const getAnalyticsData = async (req, res) => {
       where: { status: "REPORTED" },
     });
 
-    const activeUsers = await prisma.user.count();
-    const responseRate = ((resolvedIssues / totalIssues) * 100).toFixed(2);
-
     res.json({
       totalIssues,
       resolvedIssues,
       rejectedIssues,
       inProgressIssues,
       pendingReview: reportedIssues,
-      activeUsers,
-      responseRate,
     });
   } catch (error) {
     res.status(500).json({ error: "Error fetching analytics data" });
@@ -120,26 +117,58 @@ export const getWeeklyData = async (req, res) => {
   }
 };
 
-// Get last month's analytics data
+
 export const getLastMonthData = async (req, res) => {
   try {
     const today = new Date();
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(today.getMonth() - 1);
 
-    const lastMonthData = await prisma.problem.groupBy({
-      by: ["createdAt"],
+    const problems = await prisma.problem.findMany({
       where: { createdAt: { gte: oneMonthAgo } },
-      _count: { id: true },
+      select: { createdAt: true, status: true },
     });
 
-    res.json(lastMonthData);
+    // Organize data by date
+    const lastMonthData = {};
+
+    problems.forEach(({ createdAt, status }) => {
+      const dateKey = format(new Date(createdAt), "d MMM");
+
+      if (!lastMonthData[dateKey]) {
+        lastMonthData[dateKey] = { date: dateKey, reported: 0, resolved: 0, inProgress: 0 };
+      }
+
+      lastMonthData[dateKey].reported += 1;
+      if (status === "resolved") lastMonthData[dateKey].resolved += 1;
+      if (status === "inProgress") lastMonthData[dateKey].inProgress += 1;
+    });
+
+    // Convert object to an array sorted by date
+    const formattedData = Object.values(lastMonthData).sort(
+      (a, b) => Date.parse(`${a.date} ${today.getFullYear()}`) - Date.parse(`${b.date} ${today.getFullYear()}`)
+    );
+
+    res.json(formattedData);
   } catch (error) {
+    console.error("Error fetching last month data:", error);
     res.status(500).json({ error: "Error fetching last month data" });
   }
 };
 
 // Get issue categories data
+// Define the helper function
+const formatCategoryName = (category) => {
+  const formattedMap = {
+    INFRASTURCTURE: "Infrastructure",
+    ENVIRONMENT: "Environment",
+    COMMUNITY_SERVICES: "Community Services",
+    ELECTRICITY: "Electricity",
+    PUBLIC_SAFETY: "Public Safety",
+  };
+  return formattedMap[category] || category.replace(/_/g, " ");
+};
+
 export const getIssueCategories = async (req, res) => {
   try {
     const categories = await prisma.problem.groupBy({
@@ -147,11 +176,19 @@ export const getIssueCategories = async (req, res) => {
       _count: { id: true },
     });
 
-    res.json(categories);
+    const formattedCategories = categories.map((category) => ({
+      name: formatCategoryName(category.category),
+      count: category._count.id,
+    }));
+
+    res.json({ issueCategories: formattedCategories });
   } catch (error) {
-    res.status(500).json({ error: "Error fetching issue categories" });
+    console.error("Error fetching issue categories:", error);
+    res.status(500).json({ error: error.message || "Error fetching issue categories" });
   }
 };
+
+
 
 // Get recent activity
 export const getRecentActivity = async (req, res) => {
